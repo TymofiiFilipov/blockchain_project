@@ -107,7 +107,7 @@ for i in servers:
     except:
         pass
 
-p=subprocess.Popen("python3 test_main.py",
+p=subprocess.Popen("python3 mainer.py",
                    stdin=None,
                    stdout=None,
                    stderr=None,
@@ -148,7 +148,7 @@ def new_block(block):
     else:
         ser.eqeue=[]
 
-    p=subprocess.Popen("python3 test_main.py",
+    p=subprocess.Popen("python3 mainer.py",
                     stdin=None,
                     stdout=None,
                     stderr=None,
