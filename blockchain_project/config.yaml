@@ -1,0 +1,6 @@
+hash_rate: 6
+core_servers:
+  - 127.0.0.1:5001
+id: Tim
+bind_ip: 127.0.0.1
+bind_port: 5000

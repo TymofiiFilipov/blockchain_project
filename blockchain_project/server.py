@@ -4,9 +4,18 @@ import time
 import json
 import flask
 import requests
-hash_rate=6
-servers=["127.0.0.1:5001"]
-my_id="127.0.0.1:5000"
+import yaml
+
+def get_config(config_file="config.yaml"):
+    with open(config_file) as file:
+        config=yaml.safe_load(file)
+    
+    return config
+
+config=get_config()
+hash_rate=config["hash_rate"]
+servers=config["core_servers"]
+my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 
 def write(data, filename):
     data=json.dumps(data)
@@ -107,7 +116,7 @@ for i in servers:
     except:
         pass
 
-p=subprocess.Popen("python3 mainer.py",
+p=subprocess.Popen(f"python3 mainer.py {my_id}",
                    stdin=None,
                    stdout=None,
                    stderr=None,
@@ -148,7 +157,7 @@ def new_block(block):
     else:
         ser.eqeue=[]
 
-    p=subprocess.Popen("python3 mainer.py",
+    p=subprocess.Popen(f"python3 mainer.py {my_id}",
                     stdin=None,
                     stdout=None,
                     stderr=None,
