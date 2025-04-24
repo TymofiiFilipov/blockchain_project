@@ -5,8 +5,12 @@ import json
 import flask
 import requests
 import yaml
+import sys
+import os
 
 def get_config(config_file="config.yaml"):
+    if "CONFIG" in os.environ:
+        config_file=os.environ["CONFIG"]
     with open(config_file) as file:
         config=yaml.safe_load(file)
     

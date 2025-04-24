@@ -1,0 +1,6 @@
+hash_rate: 6
+core_servers:
+  - 127.0.0.1:5000
+id: Jack
+bind_ip: 127.0.0.1
+bind_port: 5001
