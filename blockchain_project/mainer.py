@@ -10,16 +10,10 @@ a=requests.get(f"http://{parent_server}/get_info")
 a=a.text.split()
 prev_hash=a[0]
 hash_rate=int(a[1])
-data=[]
+data=eval(requests.get(f"http://{parent_server}/get_eqeue/mainer").text.encode())
 
 ans=prev_hash[:hash_rate]
 run=True
-data.append({
-    "number":1,
-    "sender":"0",
-    "receiver":"Tim",
-    "date":date
-    })
 check_sum=hashlib.sha256(str(data).encode()).hexdigest()
 i=0
 while run:

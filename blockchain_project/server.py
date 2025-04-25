@@ -21,6 +21,7 @@ hash_rate=config["hash_rate"]
 servers=config["core_servers"]
 my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 data_file=config["data"]
+my_name=config["id"]
 
 def write(data, filename):
     data=json.dumps(data)
@@ -86,6 +87,7 @@ class Blockchain():
 
         write(ans, data_file)
 
+royalty={}
 
 ser=Blockchain()
 
@@ -148,19 +150,14 @@ def new_server(id):
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
     block=block.split()
-    ser.eqeue.append({
-        "number":1,
-        "sender":"0",
-        "receiver":"Tim",
-        "date":time.ctime(float(block[1]))
-    })
+    ser.eqeue.append(royalty)
     prot_data=ser.eqeue
     if ser.add_block(block[0], time.ctime(float(block[1])), int(block[2])):
         ser.save_blockchain()
         for i in servers:
             a=requests.get("http://"+i+"/found_new_block_an/"+str(prot_data)+"  "+block[0]+"  "+block[1]+"  "+block[2])
-    else:
-        ser.eqeue=[]
+
+    ser.eqeue=[]
 
     p=subprocess.Popen(f"python3 mainer.py {my_id}",
                     stdin=None,
@@ -190,3 +187,19 @@ def connect_server(id):
         return "OK"
     else:
         return "Error"
+    
+@app.route("/get_eqeue/<string:name>")
+def get_eqeue(name):
+    global royalty
+    if name=="mainer":
+        a=[i for i in ser.eqeue]
+        royalty={
+                "number":1,
+                "sender":"0",
+                "receiver":my_name,
+                "date":time.ctime(time.time())
+        }
+        a.append(royalty)
+        return str(a).encode()
+    else:
+        return str(ser.eqeue).encode()
