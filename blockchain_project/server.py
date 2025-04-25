@@ -89,10 +89,33 @@ class Blockchain():
 
 royalty={}
 
+first_block={"blocks":[
+            {
+                "date": "Mon Apr 14 20:27:33 2025",
+                "prev_hash": "",
+                "hash": "d03bc40b2ee65a463e2cca1c7f17955e7cbbb3c5214b2472c23fcbbcaaa1a78b",
+                "data": [],
+                "key": "",
+                "ver": 1,
+                "hash_rate": 5
+            }
+        ]}
+
+try:
+    a=read(data_file)["blocks"]
+    if read(data_file)["blocks"]==[]:
+        write(first_block, data_file)
+except:
+    write(first_block, data_file)
+
 ser=Blockchain()
 
+blocks=read(data_file)["blocks"]
+for i in range(len(blocks)):
+    blocks[i]=Block(blocks[i]["date"], blocks[i]["prev_hash"], blocks[i]["hash"], blocks[i]["data"], blocks[i]["key"], blocks[i]["ver"], blocks[i]["hash_rate"])
+
 def try_to_connect():
-    global hash_rate, servers
+    global hash_rate, servers, blocks, ser
     try:
         a=requests.get("http://"+servers[0]+"/new_server/"+my_id)
         a=a.text.split("%")
@@ -100,11 +123,10 @@ def try_to_connect():
             if i!=my_id:
                 servers.append(i)
         hash_rate=int(a[1])
-        b=eval(a[2])
+        b=eval((requests.get("http://"+servers[0]+"/get_blockchain/"+ser.get_last_block().hash)).encode())
         write(b, data_file)
         ser.__init__()
         if not ser.check_blockchain():
-            print(1)
             servers.pop(0)
             try_to_connect()
     except:
@@ -112,6 +134,8 @@ def try_to_connect():
         if servers!=[]:
             try_to_connect()
         else:
+            ser.blocks=blocks
+            ser.save_blockchain()
             print("Error connection")
 
 if servers!=[]:
@@ -130,7 +154,6 @@ p=subprocess.Popen(f"python3 mainer.py {my_id}",
                    shell=True)
 
 
-
 app=flask.Flask(__name__)
 
 @app.route("/")
@@ -145,7 +168,16 @@ def prev_block():
 @app.route("/new_server/<string:id>")
 def new_server(id):
     servers.append(id)
-    return str(servers[:len(servers)-1])+"%"+str(hash_rate)+"%"+str(read(data_file))
+    return str(servers[:len(servers)-1])+"%"+str(hash_rate)
+
+@app.route("/get_blockchain/<string:last_hash>")
+def get_blockchain(last_hash):
+    for i in ser.blocks:
+        if i.hash==last_hash:
+            index=ser.blocks.index(i)
+            break
+    
+    return str(ser.blocks[index:]).decode()
 
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
