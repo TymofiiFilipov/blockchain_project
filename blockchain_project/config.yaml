@@ -4,3 +4,4 @@ core_servers:
 id: Tim
 bind_ip: 127.0.0.1
 bind_port: 5000
+data: data.json

@@ -20,6 +20,7 @@ config=get_config()
 hash_rate=config["hash_rate"]
 servers=config["core_servers"]
 my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
+data_file=config["data"]
 
 def write(data, filename):
     data=json.dumps(data)
@@ -44,7 +45,7 @@ class Block():
 class Blockchain():
     def __init__(self):
         #self.blocks=[Block(time.ctime(time.time()), "", hashlib.sha256(((time.ctime(time.time())+hashlib.sha256(str([]).encode()).hexdigest()).encode())).hexdigest(), [], "", 1, hash_rate)]
-        self.blocks=read("data.json")["blocks"]
+        self.blocks=read(data_file)["blocks"]
         for i in range(len(self.blocks)):
             self.blocks[i]=Block(self.blocks[i]["date"], self.blocks[i]["prev_hash"], self.blocks[i]["hash"], self.blocks[i]["data"], self.blocks[i]["key"], self.blocks[i]["ver"], self.blocks[i]["hash_rate"])
         self.eqeue=[]
@@ -83,7 +84,7 @@ class Blockchain():
         for i in self.blocks:
             ans["blocks"].append(i.__dict__)
 
-        write(ans, "data.json")
+        write(ans, data_file)
 
 
 ser=Blockchain()
@@ -98,7 +99,7 @@ def try_to_connect():
                 servers.append(i)
         hash_rate=int(a[1])
         b=eval(a[2])
-        write(b, "data.json")
+        write(b, data_file)
         ser.__init__()
         if not ser.check_blockchain():
             print(1)
@@ -142,7 +143,7 @@ def prev_block():
 @app.route("/new_server/<string:id>")
 def new_server(id):
     servers.append(id)
-    return str(servers[:len(servers)-1])+"%"+str(hash_rate)+"%"+str(read("data.json"))
+    return str(servers[:len(servers)-1])+"%"+str(hash_rate)+"%"+str(read(data_file))
 
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
@@ -174,7 +175,6 @@ def new_block_an(block):
     a=ser.eqeue
     block=block.split("  ")
     ser.eqeue=eval(block[0])
-    print(ser.eqeue)
     if ser.add_block(block[1], time.ctime(float(block[2])), int(block[3])):
         ser.save_blockchain()
         return "OK"
