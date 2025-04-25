@@ -102,7 +102,6 @@ first_block={"blocks":[
         ]}
 
 try:
-    a=read(data_file)["blocks"]
     if read(data_file)["blocks"]==[]:
         write(first_block, data_file)
 except:
