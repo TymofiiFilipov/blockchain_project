@@ -1,3 +1,4 @@
+#importing
 import subprocess
 import hashlib
 import time
@@ -8,6 +9,9 @@ import yaml
 import sys
 import os
 
+
+
+#config
 def get_config(config_file="config.yaml"):
     if "CONFIG" in os.environ:
         config_file=os.environ["CONFIG"]
@@ -23,6 +27,33 @@ my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 data_file=config["data"]
 my_name=config["id"]
 
+
+
+#constants
+royalty={
+                "number":1,
+                "sender":"0",
+                "receiver":my_name,
+                "date":time.ctime(time.time())
+        }
+
+first_block={
+                "blocks": [
+                    {
+                        "date": "Mon Apr 14 20:27:33 2025",
+                        "prev_hash": "",
+                        "hash": "d03bc40b2ee65a463e2cca1c7f17955e7cbbb3c5214b2472c23fcbbcaaa1a78b",
+                        "data": [],
+                        "key": "",
+                        "ver": 1,
+                        "hash_rate": 5
+                    }
+                ]
+            }
+
+
+
+#tech functions
 def write(data, filename):
     data=json.dumps(data)
     data=json.loads(str(data))
@@ -33,6 +64,21 @@ def read(filename):
     with open(filename, "r", encoding="utf-8") as file:
         return json.load(file)
 
+def send_massage(ip, massage):
+    return requests.get("http://"+ip+massage).text
+
+def run_mainer():
+    p=subprocess.Popen(f"python3 mainer.py {my_id}",
+                   stdin=None,
+                   stdout=None,
+                   stderr=None,
+                   shell=True)
+    
+    return p
+
+
+
+#Blocks and Blockchain
 class Block():
     def __init__(self, date, prev_hash, hash, data, key, ver, hash_rate):
         self.date=date
@@ -87,26 +133,18 @@ class Blockchain():
 
         write(ans, data_file)
 
-royalty={}
 
-first_block={"blocks":[
-            {
-                "date": "Mon Apr 14 20:27:33 2025",
-                "prev_hash": "",
-                "hash": "d03bc40b2ee65a463e2cca1c7f17955e7cbbb3c5214b2472c23fcbbcaaa1a78b",
-                "data": [],
-                "key": "",
-                "ver": 1,
-                "hash_rate": 5
-            }
-        ]}
 
+#data file inizialization
 try:
     if read(data_file)["blocks"]==[]:
         write(first_block, data_file)
 except:
     write(first_block, data_file)
 
+
+
+#audit blockchain and connect to network of servers
 ser=Blockchain()
 
 blocks=read(data_file)["blocks"]
@@ -116,16 +154,23 @@ for i in range(len(blocks)):
 def try_to_connect():
     global hash_rate, servers, blocks, ser
     try:
-        a=requests.get("http://"+servers[0]+"/new_server/"+my_id)
-        a=a.text.split("%")
+        a=send_massage(servers[0], "/new_server/"+my_id)
+        a=a.split("%")
         for i in eval(a[0]):
             if i!=my_id:
                 servers.append(i)
         hash_rate=int(a[1])
-        b=eval((requests.get("http://"+servers[0]+"/get_blockchain/"+ser.get_last_block().hash)).encode())
+        a=eval(send_massage(servers[0], "/get_blockchain/"+ser.get_last_block().hash))
+        b={"blocks":a}
         write(b, data_file)
         ser.__init__()
-        if not ser.check_blockchain():
+        if ser.check_blockchain():
+            b=[i for i in ser.blocks]
+            ser.blocks=blocks
+            for i in b:
+                ser.blocks.append(i)
+            ser.save_blockchain()
+        else:
             servers.pop(0)
             try_to_connect()
     except:
@@ -137,22 +182,23 @@ def try_to_connect():
             ser.save_blockchain()
             print("Error connection")
 
-if servers!=[]:
+if servers!=[] and my_id!="127.0.0.1:5000":
     try_to_connect()
 
 for i in servers:
     try:
-        a=requests.get("http://"+i+"/connect_server/"+my_id)
+        a=send_massage(i, "/connect_server/"+my_id)
     except:
         pass
 
-p=subprocess.Popen(f"python3 mainer.py {my_id}",
-                   stdin=None,
-                   stdout=None,
-                   stderr=None,
-                   shell=True)
 
 
+#run mainer
+p=run_mainer()
+
+
+
+#FLASK
 app=flask.Flask(__name__)
 
 @app.route("/")
@@ -171,12 +217,16 @@ def new_server(id):
 
 @app.route("/get_blockchain/<string:last_hash>")
 def get_blockchain(last_hash):
+    index="error"
     for i in ser.blocks:
         if i.hash==last_hash:
             index=ser.blocks.index(i)
             break
-    
-    return str(ser.blocks[index:]).decode()
+
+    if index=="error":
+        return "Error"
+    else:
+        return str([i.__dict__ for i in ser.blocks[index:]])
 
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
@@ -186,15 +236,11 @@ def new_block(block):
     if ser.add_block(block[0], time.ctime(float(block[1])), int(block[2])):
         ser.save_blockchain()
         for i in servers:
-            a=requests.get("http://"+i+"/found_new_block_an/"+str(prot_data)+"  "+block[0]+"  "+block[1]+"  "+block[2])
+            a=send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
 
     ser.eqeue=[]
 
-    p=subprocess.Popen(f"python3 mainer.py {my_id}",
-                    stdin=None,
-                    stdout=None,
-                    stderr=None,
-                    shell=True)
+    p=run_mainer()
     
     return "OK"
 
@@ -221,15 +267,8 @@ def connect_server(id):
     
 @app.route("/get_eqeue/<string:name>")
 def get_eqeue(name):
-    global royalty
     if name=="mainer":
         a=[i for i in ser.eqeue]
-        royalty={
-                "number":1,
-                "sender":"0",
-                "receiver":my_name,
-                "date":time.ctime(time.time())
-        }
         a.append(royalty)
         return str(a).encode()
     else:
