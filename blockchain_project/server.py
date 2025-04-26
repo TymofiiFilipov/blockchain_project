@@ -252,7 +252,7 @@ def new_block_an(block):
     ser.eqeue=eval(block[0])
     if ser.add_block(block[1], time.ctime(float(block[2])), int(block[3])):
         ser.save_blockchain()
-        subprocess.Popen.kill(p)
+        p.kill()
         run_mainer()
         return "OK"
     else:
