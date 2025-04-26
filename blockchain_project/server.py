@@ -230,6 +230,7 @@ def get_blockchain(last_hash):
 
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
+    global p
     block=block.split()
     ser.eqeue.append(royalty)
     prot_data=ser.eqeue
