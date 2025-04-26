@@ -246,11 +246,14 @@ def new_block(block):
 
 @app.route("/found_new_block_an/<string:block>")
 def new_block_an(block):
+    global p
     a=ser.eqeue
     block=block.split("  ")
     ser.eqeue=eval(block[0])
     if ser.add_block(block[1], time.ctime(float(block[2])), int(block[3])):
         ser.save_blockchain()
+        subprocess.Popen.kill(p)
+        run_mainer()
         return "OK"
     else:
         ser.eqeue=a
