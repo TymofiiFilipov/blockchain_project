@@ -65,7 +65,10 @@ def read(filename):
         return json.load(file)
 
 def send_massage(ip, massage):
-    return requests.get("http://"+ip+massage).text
+    try:
+        return requests.get("http://"+ip+massage).text
+    except:
+        return "error"
 
 def run_mainer():
     p=subprocess.Popen(f"python3 mainer.py {my_id}",
@@ -96,6 +99,7 @@ class Blockchain():
         for i in range(len(self.blocks)):
             self.blocks[i]=Block(self.blocks[i]["date"], self.blocks[i]["prev_hash"], self.blocks[i]["hash"], self.blocks[i]["data"], self.blocks[i]["key"], self.blocks[i]["ver"], self.blocks[i]["hash_rate"])
         self.eqeue=[]
+        self.transactions=[]
     
     def get_last_block(self):
         return self.blocks[len(self.blocks)-1]
@@ -105,7 +109,13 @@ class Blockchain():
         if hash[len(hash)-hash_rate:]==self.get_last_block().hash[:hash_rate] and hashlib.sha256((str(date)+str(self.get_last_block().hash)+str(check_sum)+str(key)).encode()).hexdigest()==hash:
             block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 1, hash_rate)
             self.blocks.append(block)
-            self.eqeue=[]
+            i=0
+            while i<len(self.transactions):
+                if self.transactions[i] in self.eqeue:
+                    self.transactions.pop(i)
+                else:
+                    i+=1
+            self.eqeue=[i for i in self.transactions]
             return True
         else:
             return False
@@ -186,11 +196,7 @@ if servers!=[]:
     try_to_connect()
 
 for i in servers:
-    try:
-        a=send_massage(i, "/connect_server/"+my_id)
-    except:
-        pass
-
+    send_massage(i, "/connect_server/"+my_id)
 
 
 #run mainer
@@ -237,7 +243,7 @@ def new_block(block):
     if ser.add_block(block[0], time.ctime(float(block[1])), int(block[2])):
         ser.save_blockchain()
         for i in servers:
-            a=send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
+            send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
 
     ser.eqeue=[]
 
@@ -277,3 +283,16 @@ def get_eqeue(name):
         return str(a).encode()
     else:
         return str(ser.eqeue).encode()
+
+@app.route("/new_client/<string:transaction>")
+def new_client(transaction):
+    ser.transactions.append(eval(transaction))
+    for i in servers:
+        send_massage(i, "/new_client_an/"+transaction)
+    
+    return "OK"
+    
+@app.route("/new_client_an/<string:transaction>")
+def new_client_an(transaction):
+    ser.transactions.append(eval(transaction))
+    return "OK"
