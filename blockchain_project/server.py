@@ -182,7 +182,7 @@ def try_to_connect():
             ser.save_blockchain()
             print("Error connection")
 
-if servers!=[] and my_id!="127.0.0.1:5000":
+if servers!=[]:
     try_to_connect()
 
 for i in servers:
