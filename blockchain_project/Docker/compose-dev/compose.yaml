@@ -1,0 +1,114 @@
+---
+name: bp-dev
+
+networks:
+  localnet:
+
+volumes:
+  jack:
+  tim:
+  helga:
+  bruno:
+  jastin:
+
+configs:
+  tim:
+    file: ./config-tim.yaml
+  jack:
+    file: ./config-jack.yaml
+  helga:
+    file: ./config-helga.yaml
+  jastin:
+    file: ./config-jastin.yaml
+  bruno:
+    file: ./config-bruno.yaml
+
+services:
+  tim:
+    container_name: tim
+    build:
+      context: ../../
+      dockerfile: ./Docker/Dockerfile
+    restart: unless-stopped
+    networks:
+      - localnet
+    expose:
+      - "5000"
+    volumes:
+      - type: volume
+        source: tim
+        target: /data
+    configs:
+      - source: tim
+        target: /code/config.yaml
+  jack:
+    container_name: jack
+    build:
+      context: ../../
+      dockerfile: ./Docker/Dockerfile
+    restart: unless-stopped
+    networks:
+      - localnet
+    expose:
+      - "5000"
+    volumes:
+      - type: volume
+        source: jack
+        target: /data
+    configs:
+      - source: jack
+        target: /code/config.yaml
+  helga:
+      container_name: helga
+      build:
+        context: ../../
+        dockerfile: ./Docker/Dockerfile
+      restart: unless-stopped
+      networks:
+        - localnet
+      expose:
+        - "5000"
+      volumes:
+        - type: volume
+          source: helga
+          target: /data
+      configs:
+        - source: helga
+          target: /code/config.yaml
+  jastin:
+    container_name: jastin
+    build:
+      context: ../../
+      dockerfile: ./Docker/Dockerfile
+    restart: unless-stopped
+    networks:
+      - localnet
+    expose:
+      - "5000"
+    volumes:
+      - type: volume
+        source: jastin
+        target: /data
+    configs:
+      - source: jastin
+        target: /code/config.yaml
+  bruno:
+    container_name: bruno
+    build:
+      context: ../../
+      dockerfile: ./Docker/Dockerfile
+    restart: unless-stopped
+    networks:
+      - localnet
+    expose:
+      - "5000"
+    volumes:
+      - type: volume
+        source: bruno
+        target: /data
+    configs:
+      - source: bruno
+        target: /code/config.yaml
+
+
+
