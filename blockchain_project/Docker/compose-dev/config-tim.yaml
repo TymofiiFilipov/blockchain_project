@@ -1,0 +1,7 @@
+hash_rate: 6
+core_servers:
+  - "jack:5000"
+id: Tim
+bind_ip: tim
+bind_port: 5000
+data: /data/data.json
