@@ -8,7 +8,8 @@ import requests
 import yaml
 import sys
 import os
-
+import rsa
+import signal
 
 
 #config
@@ -31,10 +32,11 @@ my_name=config["id"]
 
 #constants
 royalty={
-                "number":1,
+                "amount":1,
                 "sender":"0",
                 "receiver":my_name,
-                "date":time.ctime(time.time())
+                "date":time.time(),
+                "signature":"0"
         }
 
 first_block={
@@ -75,10 +77,25 @@ def run_mainer():
                    stdin=None,
                    stdout=None,
                    stderr=None,
-                   shell=True)
+                   shell=True,
+                   preexec_fn=os.setsid)
     
     return p
 
+def get_checksum(transaction):
+    return hashlib.sha256((str(transaction["amount"])+transaction["sender"]+transaction["receiver"]+transaction["date"]).encode()).hexdigest()
+
+def check_transaction(transaction):
+    try:
+        public_key=rsa.PrivateKey.load_pkcs1(transaction["sender"])
+        checksum=get_checksum(transaction).encode()
+        print(rsa.decrypt(transaction["signature"], public_key))
+        if rsa.decrypt(transaction["signature"], public_key)==checksum:
+            return True
+        else:
+            return False
+    except:
+        return False
 
 
 #Blocks and Blockchain
@@ -107,7 +124,7 @@ class Blockchain():
     def add_block(self, hash, date, key):
         check_sum=hashlib.sha256(str(self.eqeue).encode()).hexdigest()
         if hash[len(hash)-hash_rate:]==self.get_last_block().hash[:hash_rate] and hashlib.sha256((str(date)+str(self.get_last_block().hash)+str(check_sum)+str(key)).encode()).hexdigest()==hash:
-            block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 1, hash_rate)
+            block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 3, hash_rate)
             self.blocks.append(block)
             i=0
             while i<len(self.transactions):
@@ -240,7 +257,7 @@ def new_block(block):
     block=block.split()
     ser.eqeue.append(royalty)
     prot_data=ser.eqeue
-    if ser.add_block(block[0], time.ctime(float(block[1])), int(block[2])):
+    if ser.add_block(block[0], float(block[1]), int(block[2])):
         ser.save_blockchain()
         for i in servers:
             send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
@@ -257,10 +274,10 @@ def new_block_an(block):
     a=ser.eqeue
     block=block.split("  ")
     ser.eqeue=eval(block[0])
-    if ser.add_block(block[1], time.ctime(float(block[2])), int(block[3])):
+    if ser.add_block(block[1], float(block[2]), int(block[3])):
         ser.save_blockchain()
-        p.kill()
-        run_mainer()
+        os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+        p=run_mainer()
         return "OK"
     else:
         ser.eqeue=a
@@ -284,13 +301,19 @@ def get_eqeue(name):
     else:
         return str(ser.eqeue).encode()
 
-@app.route("/new_client/<string:transaction>")
+@app.route("/new_client/<string>:transaction>")
 def new_client(transaction):
-    ser.transactions.append(eval(transaction))
-    for i in servers:
-        send_massage(i, "/new_client_an/"+transaction)
+    transaction=transaction.decode()
+    transaction=eval(transaction)
+    print(transaction)
+    if check_transaction(transaction):
+        ser.transactions.append(transaction)
+        for i in servers:
+            send_massage(i, "/new_client_an/"+transaction)
     
-    return "OK"
+        return "OK"
+    else:
+        return "Error"
     
 @app.route("/new_client_an/<string:transaction>")
 def new_client_an(transaction):
