@@ -2,3 +2,6 @@
 /**/__pycache__
 /**/data.json
 /**/data_jack.json
+/**/test_rsa.py
+/**/private.pem
+/**/public.pem
