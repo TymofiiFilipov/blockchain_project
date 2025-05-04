@@ -5,3 +5,11 @@ id: Jack
 bind_ip: 127.0.0.1
 bind_port: 5001
 data: data_jack.json
+public_key: -----BEGIN RSA PUBLIC KEY-----
+  MIIBCgKCAQEAjiNNydB4TM9M48vq8mx4+IKC9WIoMOBBOBtevTIPupT2YumKU7aK
+  MWFb5bIgyqQrP/ViFjcJLl3hy6ssNhoDOvGrx5v0e8+VD6vraLb88v/2+fEvDjwa
+  S+jb7GDdLtp9Mdi/b+TDh5xuvBwAALbScyup97LFJIAvHogfnSYQWZYFueo4zj4L
+  ayNFoXBE/j/yDn5Mynlw0m584uS6qiuuLfBDgxYncssbGpANFmP34GxBYc5AR1N/
+  MZ7kwheEqohS47KtDbw+q9gjLfYuGLJuAC2I0GjupERs2JVF36DyjznfH5lI12nQ
+  a/Al/zYWnHOZdAcLe6EyNOBLlxhwS4iNBQIDAQAB
+  -----END RSA PUBLIC KEY-----

@@ -28,14 +28,18 @@ servers=config["core_servers"]
 my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 data_file=config["data"]
 my_name=config["id"]
+my_public_key=config["public_key"]
 
+
+#accounts
+accounts={}
 
 
 #constants
 royalty={
                 "amount":1,
                 "sender":"0",
-                "receiver":my_name,
+                "receiver":my_public_key,
                 "date":time.time(),
                 "signature":"0"
         }
@@ -88,6 +92,12 @@ def get_checksum(transaction):
 
 def check_transaction(transaction):
     try:
+        if transaction["sender"] in accounts:
+            if accounts[transaction["sender"]]-transaction["amount"]<0:
+                return False
+        else:
+            return False
+
         public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
         signature=transaction["signature"]
         checksum=get_checksum(transaction).encode()
@@ -109,6 +119,16 @@ def encode_data(data):
     ans=base64.b64encode(ans).decode()
     return ans
 
+def connect_transaction_to_account(j):
+    if j["receiver"] in accounts:
+        accounts[j["receiver"]]+=j["amount"]
+    else:
+        accounts[j["receiver"]]=j["amount"]
+    if j["sender"] in accounts:
+        accounts[j["sender"]]-=j["amount"]
+    else:
+        accounts[j["sender"]]=-j["amount"]
+
 #Blocks and Blockchain
 class Block():
     def __init__(self, date, prev_hash, hash, data, key, ver, hash_rate):
@@ -126,6 +146,10 @@ class Blockchain():
         self.blocks=read(data_file)["blocks"]
         for i in range(len(self.blocks)):
             self.blocks[i]=Block(self.blocks[i]["date"], self.blocks[i]["prev_hash"], self.blocks[i]["hash"], self.blocks[i]["data"], self.blocks[i]["key"], self.blocks[i]["ver"], self.blocks[i]["hash_rate"])
+            if self.blocks[i].ver>=3:
+                for j in self.blocks[i].data:
+                    connect_transaction_to_account(j)
+                
         self.eqeue=[]
         self.transactions=[]
     
@@ -147,6 +171,8 @@ class Blockchain():
             if permission and limit<=1:
                 block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 3, hash_rate)
                 self.blocks.append(block)
+                for i in self.eqeue:
+                    connect_transaction_to_account(i)
                 i=0
                 while i<len(self.transactions):
                     if self.transactions[i] in self.eqeue:

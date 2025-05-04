@@ -5,3 +5,6 @@
 /**/test_rsa.py
 /**/private.pem
 /**/public.pem
+/**/generate_key.py
+/**/private_jack.pem
+/**/public_jack.pem
