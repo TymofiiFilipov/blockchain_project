@@ -273,6 +273,11 @@ def try_to_connect():
             ser.save_blockchain()
             print("Error connection")
 
+from random import randint
+from time import sleep
+
+sleep(randint(1,10))
+
 if servers!=[]:
     try_to_connect()
 
