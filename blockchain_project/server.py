@@ -91,7 +91,6 @@ def check_transaction(transaction):
         public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
         signature=transaction["signature"]
         checksum=get_checksum(transaction).encode()
-        print(checksum, signature, public_key)
         a=rsa.verify(checksum, signature, public_key)
         if a=="SHA-256":
             return True
@@ -136,16 +135,28 @@ class Blockchain():
     def add_block(self, hash, date, key):
         check_sum=hashlib.sha256(str(self.eqeue).encode()).hexdigest()
         if hash[len(hash)-hash_rate:]==self.get_last_block().hash[:hash_rate] and hashlib.sha256((str(date)+str(self.get_last_block().hash)+str(check_sum)+str(key)).encode()).hexdigest()==hash:
-            block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 3, hash_rate)
-            self.blocks.append(block)
-            i=0
-            while i<len(self.transactions):
-                if self.transactions[i] in self.eqeue:
-                    self.transactions.pop(i)
-                else:
-                    i+=1
-            self.eqeue=[i for i in self.transactions]
-            return True
+            permission=True
+            limit=0
+            for i in self.eqeue:
+                if i not in self.transactions:
+                    if i["sender"]!="0" and not check_transaction(i):
+                        permission=False
+                        break
+                    elif i["sender"]=="0":
+                        limit+=i["amount"]
+            if permission and limit<=1:
+                block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 3, hash_rate)
+                self.blocks.append(block)
+                i=0
+                while i<len(self.transactions):
+                    if self.transactions[i] in self.eqeue:
+                        self.transactions.pop(i)
+                    else:
+                        i+=1
+                self.eqeue=[i for i in self.transactions]
+                return True
+            else:
+                return False
         else:
             return False
     
