@@ -10,6 +10,7 @@ import sys
 import os
 import rsa
 import signal
+import base64
 
 
 #config
@@ -83,20 +84,31 @@ def run_mainer():
     return p
 
 def get_checksum(transaction):
-    return hashlib.sha256((str(transaction["amount"])+transaction["sender"]+transaction["receiver"]+transaction["date"]).encode()).hexdigest()
+    return hashlib.sha256((str(transaction["amount"])+transaction["sender"]+transaction["receiver"]+str(transaction["date"])).encode()).hexdigest()
 
 def check_transaction(transaction):
     try:
-        public_key=rsa.PrivateKey.load_pkcs1(transaction["sender"])
+        public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
+        signature=transaction["signature"]
         checksum=get_checksum(transaction).encode()
-        print(rsa.decrypt(transaction["signature"], public_key))
-        if rsa.decrypt(transaction["signature"], public_key)==checksum:
+        print(checksum, signature, public_key)
+        a=rsa.verify(checksum, signature, public_key)
+        if a=="SHA-256":
             return True
         else:
             return False
     except:
         return False
 
+def inizialization(transaction):
+    ans=base64.b64decode(transaction.encode()).decode()
+    ans=eval(ans)
+    return ans
+
+def encode_data(data):
+    ans=str(data).encode()
+    ans=base64.b64encode(ans).decode()
+    return ans
 
 #Blocks and Blockchain
 class Block():
@@ -256,13 +268,11 @@ def new_block(block):
     global p
     block=block.split()
     ser.eqeue.append(royalty)
-    prot_data=ser.eqeue
+    prot_data=encode_data(ser.eqeue)
     if ser.add_block(block[0], float(block[1]), int(block[2])):
         ser.save_blockchain()
         for i in servers:
             send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
-
-    ser.eqeue=[]
 
     p=run_mainer()
     
@@ -273,7 +283,7 @@ def new_block_an(block):
     global p
     a=ser.eqeue
     block=block.split("  ")
-    ser.eqeue=eval(block[0])
+    ser.eqeue=inizialization(block[0])
     if ser.add_block(block[1], float(block[2]), int(block[3])):
         ser.save_blockchain()
         os.killpg(os.getpgid(p.pid), signal.SIGTERM)
@@ -301,15 +311,15 @@ def get_eqeue(name):
     else:
         return str(ser.eqeue).encode()
 
-@app.route("/new_client/<string>:transaction>")
+@app.route("/new_client/<string:transaction>")
 def new_client(transaction):
-    transaction=transaction.decode()
-    transaction=eval(transaction)
-    print(transaction)
+    transaction_an=transaction
+    transaction=inizialization(transaction)
     if check_transaction(transaction):
+        transaction["signature"]=str(transaction["signature"])
         ser.transactions.append(transaction)
         for i in servers:
-            send_massage(i, "/new_client_an/"+transaction)
+            send_massage(i, "/new_client_an/"+transaction_an)
     
         return "OK"
     else:
@@ -317,5 +327,12 @@ def new_client(transaction):
     
 @app.route("/new_client_an/<string:transaction>")
 def new_client_an(transaction):
-    ser.transactions.append(eval(transaction))
-    return "OK"
+    transaction=inizialization(transaction)
+    if check_transaction(transaction):
+        transaction["signature"]=str(transaction["signature"])
+        ser.transactions.append(transaction)
+        print("OK")
+        return "OK"
+    else:
+        print("Error")
+        return "Error"
