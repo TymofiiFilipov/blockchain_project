@@ -29,7 +29,7 @@ my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 data_file=config["data"]
 my_name=config["id"]
 my_public_key=config["public_key"]
-
+print(my_public_key)
 
 #accounts
 accounts={}
@@ -88,19 +88,23 @@ def run_mainer():
     return p
 
 def get_checksum(transaction):
-    return hashlib.sha256((str(transaction["amount"])+transaction["sender"]+transaction["receiver"]+str(transaction["date"])).encode()).hexdigest()
+    return hashlib.sha256((str(transaction["amount"])+transaction["receiver"]+str(transaction["date"])).encode()).hexdigest()
 
 def check_transaction(transaction):
     try:
         if transaction["sender"] in accounts:
+            print(accounts[transaction["sender"]])
             if accounts[transaction["sender"]]-transaction["amount"]<0:
                 return False
         else:
+            print("Not account")
+            print(transaction["sender"], accounts)
             return False
 
         public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
         signature=transaction["signature"]
         checksum=get_checksum(transaction).encode()
+        print(checksum)
         a=rsa.verify(checksum, signature, public_key)
         if a=="SHA-256":
             return True
@@ -111,6 +115,7 @@ def check_transaction(transaction):
 
 def inizialization(transaction):
     ans=base64.b64decode(transaction.encode()).decode()
+    print(ans)
     ans=eval(ans)
     return ans
 
@@ -157,6 +162,7 @@ class Blockchain():
         return self.blocks[len(self.blocks)-1]
     
     def add_block(self, hash, date, key):
+        print(self.eqeue)
         check_sum=hashlib.sha256(str(self.eqeue).encode()).hexdigest()
         if hash[len(hash)-hash_rate:]==self.get_last_block().hash[:hash_rate] and hashlib.sha256((str(date)+str(self.get_last_block().hash)+str(check_sum)+str(key)).encode()).hexdigest()==hash:
             permission=True
@@ -196,8 +202,17 @@ class Blockchain():
                 return False
             if j!=0 and i.hash[len(i.hash)-i.hash_rate:]!=j.hash[:i.hash_rate]:
                 return False
+            limit=0
+            if i.ver>=4:
+                for l in i.data:
+                    if l["sender"]!="0" and not check_transaction(i):
+                            return False
+                    elif l["sender"]=="0":
+                        limit+=i["amount"]
+                if limit>1:
+                    return False
             j=i
-        
+
         return True
     
     def save_blockchain(self):
@@ -352,6 +367,7 @@ def get_eqeue(name):
 def new_client(transaction):
     transaction_an=transaction
     transaction=inizialization(transaction)
+    print(transaction)
     if check_transaction(transaction):
         transaction["signature"]=str(transaction["signature"])
         ser.transactions.append(transaction)

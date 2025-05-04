@@ -5,7 +5,8 @@ id: Tim
 bind_ip: 127.0.0.1
 bind_port: 5000
 data: data.json
-public_key: -----BEGIN RSA PUBLIC KEY-----
+public_key: |
+  -----BEGIN RSA PUBLIC KEY-----
   MIIBCgKCAQEAgfiw3oZv9VhM9Jrh/9BHFKfh34BUTKNKJi4UWy4xqeWhLq7wEb8A
   GkN2d6FEgnzOtad+4O0DJOT8/aUvCDCLrgzKS62KWp54h9mjDjKz53IUjnm/5+AU
   7TW2aArVdW1rp3ZYbVwy1nZVqJmyg8rbsoNk9ujSTWcDQW9ITo4E027znO7jpUlo
