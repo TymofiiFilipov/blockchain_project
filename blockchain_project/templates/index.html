@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css')}}">
+        <title>Document</title>
+    </head>
+    <body>
+        <div class="container">
+            <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+              <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+                <svg class="bi me-2" width="40" height="32" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+                <span class="fs-4">Blockchain</span>
+              </a>
+        
+              <ul class="nav nav-pills">
+                <li class="nav-item"><a href="#" class="nav-link" aria-current="page">Home</a></li>
+                <li class="nav-item"><a href="#" class="nav-link active">Blockchain</a></li>
+                <li class="nav-item"><a href="/client_servers" class="nav-link">Servers</a></li>
+                <li class="nav-item"><a href="/client_accounts" class="nav-link">Accounts</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+              </ul>
+            </header>
+          </div>
+
+          <table>
+            <tr>
+              <td style="width: 30%;">
+                <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary" style="width: 550px;">
+                  <a href="/" class="d-flex align-items-center flex-shrink-0 p-3 link-body-emphasis text-decoration-none border-bottom">
+                    <svg class="bi pe-none me-2" width="30" height="24" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+                    <span class="fs-5 fw-semibold">Блоки</span>
+                  </a>
+                  <div class="list-group list-group-flush border-bottom scrollarea list-blockchain">
+                    {% for i in blockchain %}
+                    <a href="#" id="block_{{blockchain.index(i)}}" onclick="get_block('block_{{blockchain.index(i)}}', '{{ip}}')" class="list-group-item list-group-item-action py-3 lh-sm">
+                      <div class="d-flex w-100 align-items-center justify-content-between">
+                        <strong class="mb-1">Блок №{{blockchain.index(i)+1}}</strong>
+                        <small class="text-body-secondary">{{i.date}}</small>
+                      </div>
+                      <div class="col-10 mb-1 small" id="block_{{blockchain.index(i)}}_hash">Хеш: {{i.hash}}</div>
+                    </a>
+                    {% endfor %}
+                  </div>
+                </div>
+              </td>
+              <td style="width: 70%;">
+                <div class="modal-dialog container-block" id="main_block">
+                  <div class="modal-content rounded-4 shadow content-block">
+                    <div class="d-flex w-100 align-items-center justify-content-between">
+                      <strong class="mb-1" id="header" style="font-size: 35px;"></strong>
+                      <small class="text-body-secondary" id="date"></small>
+                    </div>
+                    <table>
+                      <tr>
+                        <td>
+                          <div class="modal-header border-bottom-0">
+                            <h1 class="modal-title fs-5">Хеш</h1>
+                          </div>
+                          <div class="modal-body py-0">
+                            <p id="hash"></p>
+                          </div>
+                          <div class="modal-header border-bottom-0">
+                            <h1 class="modal-title fs-5">Попередній хеш</h1>
+                          </div>
+                          <div class="modal-body py-0">
+                            <p id="prev_hash"></p>
+                          </div>
+                          <div class="modal-header border-bottom-0">
+                            <h1 class="modal-title fs-5">Ключ</h1>
+                          </div>
+                          <div class="modal-body py-0">
+                            <p id="key"></p>
+                          </div>
+                          <div class="modal-header border-bottom-0">
+                            <h1 class="modal-title fs-5">Складність знаходження</h1>
+                          </div>
+                          <div class="modal-body py-0">
+                            <p id="hash_rate"></p>
+                          </div>
+                          <div class="modal-header border-bottom-0">
+                            <h1 class="modal-title fs-5">Версія</h1>
+                          </div>
+                          <div class="modal-body py-0">
+                            <p id="version"></p>
+                          </div>
+                          <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
+                          </div>
+                        </td>
+                        <td>
+                          <div class="list-group list-group-flush border-bottom scrollarea list-transactions" id="list_transactions">
+                            <a href="#" class="list-group-item list-group-item-action py-3 lh-sm">
+                              <h1 class="modal-title fs-5" style="margin-bottom: 5px;">Дата</h1>
+                              <div class="col-10 mb-1 small">Кількість: </div>
+                              <div class="col-10 mb-1 small">Надсилач: </div>
+                              <div class="col-10 mb-1 small">Отримувач: </div>
+                              <div class="col-10 mb-1 small">Підпис: </div>
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+          
+          <script src="https://cdn.jsdelivr.net/npm/xmlhttprequest@1.8.0/lib/XMLHttpRequest.min.js"></script>
+          <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    </body>
+</html>

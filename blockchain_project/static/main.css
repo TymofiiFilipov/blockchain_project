@@ -1,0 +1,49 @@
+.list-blockchain {
+    max-height: 800px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
+    width: 550px;
+}
+
+.container-blockch {
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.container-block {
+    margin: 10%;
+    width: 80%;
+    height: 600px;
+}
+
+.content-block {
+    height: 100%;
+    padding: 10%;
+}
+
+.list-transactions {
+    max-height: 400px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
+    width: 300px;
+}
+
+.block-server {
+    background-color: rgb(237 240 253);
+}
+
+.exit {
+    float: right;
+    margin: 20px;
+    width: 50px;
+    height: 50px;
+}
+
+.info-bar {
+    margin-bottom: 15px;
+    font-size: 30px;
+}

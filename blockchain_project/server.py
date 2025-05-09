@@ -11,6 +11,9 @@ import os
 import rsa
 import signal
 import base64
+from flask import url_for
+from random import randint
+from time import sleep
 
 
 #config
@@ -29,7 +32,7 @@ my_id=f'{config["bind_ip"]}:{config["bind_port"]}'
 data_file=config["data"]
 my_name=config["id"]
 my_public_key=config["public_key"]
-print(my_public_key)
+print(hash_rate)
 
 #accounts
 accounts={}
@@ -93,18 +96,14 @@ def get_checksum(transaction):
 def check_transaction(transaction):
     try:
         if transaction["sender"] in accounts:
-            print(accounts[transaction["sender"]])
             if accounts[transaction["sender"]]-transaction["amount"]<0:
                 return False
         else:
-            print("Not account")
-            print(transaction["sender"], accounts)
             return False
 
         public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
         signature=transaction["signature"]
         checksum=get_checksum(transaction).encode()
-        print(checksum)
         a=rsa.verify(checksum, signature, public_key)
         if a=="SHA-256":
             return True
@@ -115,7 +114,6 @@ def check_transaction(transaction):
 
 def inizialization(transaction):
     ans=base64.b64decode(transaction.encode()).decode()
-    print(ans)
     ans=eval(ans)
     return ans
 
@@ -133,6 +131,25 @@ def connect_transaction_to_account(j):
         accounts[j["sender"]]-=j["amount"]
     else:
         accounts[j["sender"]]=-j["amount"]
+    
+def copy_block(i):
+    if i.ver>=2:
+        return Block(i.date, i.prev_hash, i.hash, [{"amount": j["amount"], "sender": j["sender"], "receiver": j["receiver"], "date": j["date"], "signature": j["signature"]} for j in i.data], i.key, i.ver, i.hash_rate)
+    else:
+        return Block(i.date, i.prev_hash, i.hash, [{"number": j["number"], "sender": j["sender"], "receiver": j["receiver"], "date": j["date"]} for j in i.data], i.key, i.ver, i.hash_rate)
+
+def convert_blockchain_to_give(blockchain):
+    given_blockchain=[copy_block(i) for i in blockchain]
+    for i in given_blockchain:
+        if type(i.date)==type(0.1):
+            i.date=time.ctime(i.date)
+        for j in i.data:
+            if type(j["date"])==type(0.1):
+                j["date"]=time.ctime(j["date"])
+    
+    return given_blockchain
+    
+
 
 #Blocks and Blockchain
 class Block():
@@ -162,7 +179,6 @@ class Blockchain():
         return self.blocks[len(self.blocks)-1]
     
     def add_block(self, hash, date, key):
-        print(self.eqeue)
         check_sum=hashlib.sha256(str(self.eqeue).encode()).hexdigest()
         if hash[len(hash)-hash_rate:]==self.get_last_block().hash[:hash_rate] and hashlib.sha256((str(date)+str(self.get_last_block().hash)+str(check_sum)+str(key)).encode()).hexdigest()==hash:
             permission=True
@@ -175,7 +191,7 @@ class Blockchain():
                     elif i["sender"]=="0":
                         limit+=i["amount"]
             if permission and limit<=1:
-                block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 3, hash_rate)
+                block=Block(date, self.get_last_block().hash, hash, self.eqeue, key, 4, hash_rate)
                 self.blocks.append(block)
                 for i in self.eqeue:
                     connect_transaction_to_account(i)
@@ -199,6 +215,7 @@ class Blockchain():
             if hashlib.sha256((str(i.date)+str(i.prev_hash)+str(check_sum)+str(i.key)).encode()).hexdigest()!=i.hash:
                 return False
             if j!=0 and i.prev_hash!=j.hash:
+                print(i.__dict__)
                 return False
             if j!=0 and i.hash[len(i.hash)-i.hash_rate:]!=j.hash[:i.hash_rate]:
                 return False
@@ -208,10 +225,10 @@ class Blockchain():
                     if l["sender"]!="0" and not check_transaction(i):
                             return False
                     elif l["sender"]=="0":
-                        limit+=i["amount"]
+                        limit+=l["amount"]
                 if limit>1:
                     return False
-            j=i
+            j=copy_block(i)
 
         return True
     
@@ -237,6 +254,7 @@ except:
 
 #audit blockchain and connect to network of servers
 ser=Blockchain()
+print(ser.check_blockchain())
 
 blocks=read(data_file)["blocks"]
 for i in range(len(blocks)):
@@ -273,10 +291,7 @@ def try_to_connect():
             ser.save_blockchain()
             print("Error connection")
 
-from random import randint
-from time import sleep
-
-sleep(randint(1,10))
+#sleep(randint(1,10))
 
 if servers!=[]:
     try_to_connect()
@@ -288,6 +303,9 @@ for i in servers:
 #run mainer
 p=run_mainer()
 
+
+#client response
+amount_of_blocks=0
 
 
 #FLASK
@@ -318,11 +336,11 @@ def get_blockchain(last_hash):
     if index=="error":
         return "Error"
     else:
-        return str([i.__dict__ for i in ser.blocks[index:]])
+        return str([i.__dict__ for i in ser.blocks[index+1:]])
 
 @app.route("/found_new_block/<string:block>")
 def new_block(block):
-    global p
+    global p, amount_of_blocks
     block=block.split()
     ser.eqeue.append(royalty)
     prot_data=encode_data(ser.eqeue)
@@ -330,8 +348,9 @@ def new_block(block):
         ser.save_blockchain()
         for i in servers:
             send_massage(i, f"/found_new_block_an/{prot_data}  {block[0]}  {block[1]}  {block[2]}")
-
-    p=run_mainer()
+        
+        p=run_mainer()
+        amount_of_blocks+=1
     
     return "OK"
 
@@ -372,7 +391,6 @@ def get_eqeue(name):
 def new_client(transaction):
     transaction_an=transaction
     transaction=inizialization(transaction)
-    print(transaction)
     if check_transaction(transaction):
         transaction["signature"]=str(transaction["signature"])
         ser.transactions.append(transaction)
@@ -389,8 +407,46 @@ def new_client_an(transaction):
     if check_transaction(transaction):
         transaction["signature"]=str(transaction["signature"])
         ser.transactions.append(transaction)
-        print("OK")
         return "OK"
     else:
-        print("Error")
         return "Error"
+
+@app.route("/client_get_blockchain")
+def client_page():
+    given_blockchain=convert_blockchain_to_give(ser.blocks)
+    
+    return flask.render_template("/index.html", blockchain=given_blockchain, ip=my_id)
+
+@app.route("/get_block/<string:hash>")
+def get_block(hash):
+    for i in ser.blocks:
+        if i.hash==hash:
+            return flask.jsonify(convert_blockchain_to_give([i])[0].__dict__)
+    
+    return "Error"
+
+@app.route("/client_servers")
+def client_servers():
+    given_servers=[]
+    for i in servers:
+        given_servers.append(inizialization(send_massage(i, "/info_for_client")))
+    given_servers.append({"name":my_name, "ip":my_id, "hash_rate":hash_rate})
+    return flask.render_template("/servers.html", servers=given_servers)
+
+@app.route("/info_for_client")
+def info_for_client():
+    return encode_data({"name":my_name, "ip":my_id, "hash_rate":hash_rate})
+
+@app.route("/info_for_client_detail")
+def info_for_client_detail():
+    k=0
+    for i in ser.blocks:
+        if i.ver>=3:
+            for j in i.data:
+                if j["signature"]=="0" and j["receiver"]==my_public_key:
+                    k+=1
+    return flask.render_template("/server_detail.html", ip=my_id, name=my_name, hash_rate=hash_rate, public_key=my_public_key, amount_of_blocks=amount_of_blocks, amount_of_allblocks=k)
+
+@app.route("/client_accounts")
+def client_accounts():
+    return flask.render_template("/accounts.html")
