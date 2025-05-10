@@ -98,23 +98,32 @@ def check_transaction(transaction):
         if transaction["sender"] in accounts:
             if accounts[transaction["sender"]]-transaction["amount"]<0:
                 return False
-        else:
-            return False
 
-        public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
-        if type(transaction["signature"])==type(""):
-            signature=eval(transaction["signature"])
-        else:
-            signature=transaction["signature"]
-        
-        checksum=get_checksum(transaction).encode()
-        a=rsa.verify(checksum, signature, public_key)
-        if a=="SHA-256":
-            return True
-        else:
-            return False
+            public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
+            if type(transaction["signature"])==type(""):
+                signature=eval(transaction["signature"])
+            else:
+                signature=transaction["signature"]
+            
+            checksum=get_checksum(transaction).encode()
+            a=rsa.verify(checksum, signature, public_key)
+            if a=="SHA-256":
+                return True
+            else:
+                return False
     except:
         return False
+
+    public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
+    signature=eval(transaction["signature"])
+    checksum=get_checksum(transaction).encode()
+    a=rsa.verify(checksum, signature, public_key)
+    if a=="SHA-256":
+        return True
+    else:
+        return False
+    '''except:
+        return False'''
 
 def inizialization(transaction):
     ans=base64.b64decode(eval(transaction)).decode()
