@@ -56,10 +56,10 @@ function get_block(block_id, ip) {
 
       let sender=document.createElement('div');
       sender.className="col-10 mb-1 small";
-      sender.innerText="Надсилач "+String(content.data[i].sender);
+      sender.innerText="Надсилач "+String(convert_pub_key(content.data[i].sender));
       let receiver=document.createElement('div');
       receiver.className="col-10 mb-1 small";
-      receiver.innerText="Отримувач "+String(content.data[i].receiver);
+      receiver.innerText="Отримувач "+String(convert_pub_key(content.data[i].receiver));
       let signature=document.createElement('div');
       signature.className="col-10 mb-1 small";
       signature.innerText="Підпис "+String(content.data[i].signature);
@@ -79,4 +79,13 @@ function http_get_request(adress, ip) {
     xmlHttp.open( "GET", url, false );
     xmlHttp.send(null);
     return xmlHttp.responseText;
+}
+
+function convert_pub_key(public_key) {
+  if (public_key=="0") {
+    return "0";
+  }
+  else {
+    return public_key.slice(43, 49)+"******"+public_key.slice(-43, -37);
+  }
 }

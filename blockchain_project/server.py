@@ -94,33 +94,34 @@ def get_checksum(transaction):
     return hashlib.sha256((str(transaction["amount"])+transaction["receiver"]+str(transaction["date"])).encode()).hexdigest()
 
 def check_transaction(transaction):
-    try:
-        if transaction["sender"] in accounts:
-            if accounts[transaction["sender"]]-transaction["amount"]<0:
-                return False
-        else:
+    #try:
+    if transaction["sender"] in accounts:
+        if accounts[transaction["sender"]]-transaction["amount"]<0:
             return False
-
-        public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
-        signature=transaction["signature"]
-        checksum=get_checksum(transaction).encode()
-        a=rsa.verify(checksum, signature, public_key)
-        if a=="SHA-256":
-            return True
-        else:
-            return False
-    except:
+    else:
         return False
 
+    public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
+    signature=eval(transaction["signature"])
+    checksum=get_checksum(transaction).encode()
+    a=rsa.verify(checksum, signature, public_key)
+    if a=="SHA-256":
+        return True
+    else:
+        return False
+    '''except:
+        return False'''
+
 def inizialization(transaction):
-    ans=base64.b64decode(transaction.encode()).decode()
-    ans=eval(ans)
+    ans=base64.b64decode(eval(transaction)).decode()
+    try:
+        ans=eval(ans)
+    except:
+        ans=str(ans)
     return ans
 
 def encode_data(data):
-    ans=str(data).encode()
-    ans=base64.b64encode(ans).decode()
-    return ans
+    return base64.b64encode(str(data).encode())
 
 def connect_transaction_to_account(j):
     if j["receiver"] in accounts:
@@ -168,7 +169,7 @@ class Blockchain():
         self.blocks=read(data_file)["blocks"]
         for i in range(len(self.blocks)):
             self.blocks[i]=Block(self.blocks[i]["date"], self.blocks[i]["prev_hash"], self.blocks[i]["hash"], self.blocks[i]["data"], self.blocks[i]["key"], self.blocks[i]["ver"], self.blocks[i]["hash_rate"])
-            if self.blocks[i].ver>=3:
+            if self.blocks[i].ver>=4:
                 for j in self.blocks[i].data:
                     connect_transaction_to_account(j)
                 
@@ -222,7 +223,8 @@ class Blockchain():
             limit=0
             if i.ver>=4:
                 for l in i.data:
-                    if l["sender"]!="0" and not check_transaction(i):
+                    if l["sender"]!="0" and not check_transaction(l):
+                            print(i.__dict__)
                             return False
                     elif l["sender"]=="0":
                         limit+=l["amount"]
@@ -449,4 +451,27 @@ def info_for_client_detail():
 
 @app.route("/client_accounts")
 def client_accounts():
-    return flask.render_template("/accounts.html")
+    return flask.render_template("/accounts.html", accounts=accounts, encode_data=encode_data)
+
+@app.route("/client_account/<string:account>")
+def client_account(account):
+    account=str(inizialization(account))
+    ans=[]
+    current_acc=0
+    for i in ser.blocks:
+        if i.ver>=4:
+            for j in i.data:
+                if j["sender"]==account:
+                    current_acc-=j["amount"]
+                    ans.append({"date":time.ctime(j["date"]),
+                                "amount":-j["amount"],
+                                "an_acc":j["receiver"],
+                                "current_acc":current_acc})
+                elif j["receiver"]==account:
+                    current_acc+=j["amount"]
+                    ans.append({"date":time.ctime(j["date"]),
+                                "amount":j["amount"],
+                                "an_acc":j["sender"],
+                                "current_acc":current_acc})
+    
+    return flask.render_template("/account.html", account=account, amount_acc=accounts[account], transactions=ans, ip=my_id, len=len)
