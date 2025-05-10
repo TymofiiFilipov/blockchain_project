@@ -54,12 +54,22 @@ function get_block(block_id, ip) {
         amount.innerText="Кількість "+String(content.data[i].amount);
       }
 
-      let sender=document.createElement('div');
-      sender.className="col-10 mb-1 small";
-      sender.innerText="Надсилач "+String(convert_pub_key(content.data[i].sender));
-      let receiver=document.createElement('div');
-      receiver.className="col-10 mb-1 small";
-      receiver.innerText="Отримувач "+String(convert_pub_key(content.data[i].receiver));
+      if (content.ver>2) {
+        var sender=document.createElement('div');
+        sender.className="col-10 mb-1 small";
+        sender.innerText="Надсилач "+String(convert_pub_key(content.data[i].sender));
+        var receiver=document.createElement('div');
+        receiver.className="col-10 mb-1 small";
+        receiver.innerText="Отримувач "+String(convert_pub_key(content.data[i].receiver));
+      }
+      else {
+        var sender=document.createElement('div');
+        sender.className="col-10 mb-1 small";
+        sender.innerText="Надсилач "+String(content.data[i].sender);
+        var receiver=document.createElement('div');
+        receiver.className="col-10 mb-1 small";
+        receiver.innerText="Отримувач "+String(content.data[i].receiver);
+      }
       let signature=document.createElement('div');
       signature.className="col-10 mb-1 small";
       signature.innerText="Підпис "+String(content.data[i].signature);

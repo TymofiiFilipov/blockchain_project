@@ -94,26 +94,38 @@ def get_checksum(transaction):
     return hashlib.sha256((str(transaction["amount"])+transaction["receiver"]+str(transaction["date"])).encode()).hexdigest()
 
 def check_transaction(transaction):
-    #try:
-    if transaction["sender"] in accounts:
-        if accounts[transaction["sender"]]-transaction["amount"]<0:
+    try:
+        if transaction["sender"] in accounts:
+            if accounts[transaction["sender"]]-transaction["amount"]<0:
+                return False
+        else:
             return False
-    else:
-        return False
 
-    public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
-    signature=eval(transaction["signature"])
-    checksum=get_checksum(transaction).encode()
-    a=rsa.verify(checksum, signature, public_key)
-    if a=="SHA-256":
-        return True
-    else:
+        public_key=rsa.PublicKey.load_pkcs1(transaction["sender"])
+        if type(transaction["signature"])==type(""):
+            signature=eval(transaction["signature"])
+        else:
+            signature=transaction["signature"]
+        
+        checksum=get_checksum(transaction).encode()
+        a=rsa.verify(checksum, signature, public_key)
+        if a=="SHA-256":
+            return True
+        else:
+            return False
+    except:
         return False
-    '''except:
-        return False'''
 
 def inizialization(transaction):
     ans=base64.b64decode(eval(transaction)).decode()
+    try:
+        ans=eval(ans)
+    except:
+        ans=str(ans)
+    return ans
+
+def inizialization_for_data(transaction):
+    ans=base64.b64decode(transaction).decode()
     try:
         ans=eval(ans)
     except:
@@ -431,7 +443,7 @@ def get_block(hash):
 def client_servers():
     given_servers=[]
     for i in servers:
-        given_servers.append(inizialization(send_massage(i, "/info_for_client")))
+        given_servers.append(inizialization_for_data(send_massage(i, "/info_for_client")))
     given_servers.append({"name":my_name, "ip":my_id, "hash_rate":hash_rate})
     return flask.render_template("/servers.html", servers=given_servers)
 

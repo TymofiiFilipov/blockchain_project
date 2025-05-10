@@ -10,62 +10,66 @@
     </head>
     <body>
         <div class="container">
-            <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
-              <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-                <svg class="bi me-2" width="40" height="32" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
-                <span class="fs-4">Blockchain</span>
-              </a>
+          <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+              <svg class="bi me-2" width="40" height="32" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+              <span class="fs-4">Blockchain</span>
+            </a>
+      
+            <ul class="nav nav-pills">
+              <li class="nav-item"><a href="#" class="nav-link" aria-current="page">Home</a></li>
+              <li class="nav-item"><a href="/client_get_blockchain" class="nav-link">Blockchain</a></li>
+              <li class="nav-item"><a href="/client_servers" class="nav-link">Servers</a></li>
+              <li class="nav-item"><a href="/client_accounts" class="nav-link active">Accounts</a></li>
+              <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+            </ul>
+          </header>
+        </div>
+
+        <button type="button" class="btn-close exit" aria-label="Close" onclick="assign_to_url('{{ip}}', '/client_accounts')"></button>
         
-              <ul class="nav nav-pills">
-                <li class="nav-item"><a href="#" class="nav-link" aria-current="page">Home</a></li>
-                <li class="nav-item"><a href="/client_get_blockchain" class="nav-link">Blockchain</a></li>
-                <li class="nav-item"><a href="/client_servers" class="nav-link">Servers</a></li>
-                <li class="nav-item"><a href="/client_accounts" class="nav-link active">Accounts</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">About</a></li>
-              </ul>
-            </header>
+        <div class="modal-dialog container-block1">
+          <div class="modal-content rounded-4 shadow content-block1">
+            <table>
+              <tr>
+                <td style="width: 45%;">
+                  <div class="container-block" style="width: 100%;">
+                    <h2>Публічний ключ</h2>
+                    <h6>{{account[43:-37] if account!="0" else "0"}}</h6>
+                    <h2>Рахунок</h2>
+                    <h5>{{amount_acc}}</h5>
+                  </div>
+                </td>
+                <td style="width: 55%;">
+                  <div class="table-responsive small" style="overflow:auto; max-height:500px;">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th scope="col">№</th>
+                          <th scope="col">Дата</th>
+                          <th scope="col">Кількість</th>
+                          <th scope="col">Надсилач/Отримувач</th>
+                          <th scope="col">Тогочасний Рахунок</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for i in range(len(transactions)) %}
+                        <tr class="{{'table-success' if transactions[i]['amount']>0 else 'table-danger'}}">
+                          <td>{{i+1}}</td>
+                          <td>{{transactions[i]["date"]}}</td>
+                          <td>{{transactions[i]["amount"]}}</td>
+                          <td>{{transactions[i]["an_acc"][43:49]+"********"+transactions[i]["an_acc"][-43:-37] if transactions[i]["an_acc"]!="0" else "0"}}</td>
+                          <td>{{transactions[i]["current_acc"]}}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
-          
-          <button type="button" class="btn-close exit" aria-label="Close" onclick="assign_to_url('{{ip}}', '/client_accounts')"></button>
-        
-        <table style="width: 90%;">
-          <tr>
-            <td style="width: 50%;">
-              <div class="container-block" style="width: 100%;">
-                <h2>Публічний ключ</h2>
-                <h5>{{account[43:-37] if account!="0" else "0"}}</h5>
-                <h2>Рахунок</h2>
-                <h5>{{amount_acc}}</h5>
-              </div>
-            </td>
-            <td style="width: 50%;">
-              <div class="table-responsive small" style="overflow:auto; max-height:500px;">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th scope="col">№</th>
-                      <th scope="col">Дата</th>
-                      <th scope="col">Кількість</th>
-                      <th scope="col">Надсилач/Отримувач</th>
-                      <th scope="col">Тогочасний Рахунок</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for i in range(len(transactions)) %}
-                    <tr class="{{'table-success' if transactions[i]['amount']>0 else 'table-danger'}}">
-                      <td>{{i+1}}</td>
-                      <td>{{transactions[i]["date"]}}</td>
-                      <td>{{transactions[i]["amount"]}}</td>
-                      <td>{{transactions[i]["an_acc"][43:49]+"********"+transactions[i]["an_acc"][-43:-37] if transactions[i]["an_acc"]!="0" else "0"}}</td>
-                      <td>{{transactions[i]["current_acc"]}}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          </tr>
-        </table>
+        </div>
 
           <script src="https://cdn.jsdelivr.net/npm/xmlhttprequest@1.8.0/lib/XMLHttpRequest.min.js"></script>
           <script src="{{ url_for('static', filename='js/servers.js') }}"></script>

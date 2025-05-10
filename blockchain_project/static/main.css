@@ -47,3 +47,15 @@
     margin-bottom: 15px;
     font-size: 30px;
 }
+
+.container-block1 {
+    margin: 10%;
+    margin-top: 5%;
+    width: 80%;
+    height: 700px;
+}
+
+.content-block1 {
+    height: 100%;
+    padding: 1%;
+}
