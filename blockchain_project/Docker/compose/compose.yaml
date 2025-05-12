@@ -1,0 +1,23 @@
+---
+name: bp
+
+services:
+  server:
+    container_name: bpserver
+    build:
+      context: ../../
+      dockerfile: ./Docker/Dockerfile
+    restart: unless-stopped
+    command: gunicorn -w 1 -b 0.0.0.0:5000 --access-logfile '-' 'server:app'
+    ports:
+      - "5000:5000"
+    volumes:
+      - type: bind
+        source: ../
+        target: /data
+      - type: bind
+        source: ../../config.yaml
+        target: /code/config.yaml
+
+
+
