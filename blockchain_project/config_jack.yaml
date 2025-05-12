@@ -1,4 +1,4 @@
-hash_rate: 8
+hash_rate: 6
 core_servers:
   - 127.0.0.1:5000
 id: Jack
